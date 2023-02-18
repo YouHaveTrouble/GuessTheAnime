@@ -23,6 +23,7 @@
           <input type="button" value="Guess" @click="guess()" :disabled="answerRevealed">
           <input type="button" value="Give up" @click="giveUp()" :disabled="answerRevealed">
         </div>
+        <p>{{error}}</p>
 
         <div v-if="answerRevealed" class="titleWrap">
           <p v-for="title in titles">{{ title }}</p>
@@ -54,6 +55,7 @@ export default {
       answerRevealed: false,
       titles: [],
       guessPhrase: "",
+      error: "",
       displayData: {
         synopsis: ""
       },
@@ -109,6 +111,7 @@ export default {
       // synopsis less than 30 words
       if (animeDatajson.synopsis.split(" ").length < 50) return false;
 
+      // not a hentai
       for (const genreId in animeDatajson.genres) {
         const genre = animeDatajson.genres[genreId].name;
         if (genre == null) continue;
@@ -128,15 +131,28 @@ export default {
     guess() {
       for (const titleId in this.titles) {
         const title = this.titles[titleId];
-        if (levenshtein(title.toLowerCase(), this.guessPhrase.toLowerCase()) <= 1) {
+        const distance = levenshtein(title.toLowerCase(), this.guessPhrase.toLowerCase());
+        if (distance <= 1) {
           this.answerRevealed = true;
           this.setDisplayData(false)
+          this.error = "";
           return;
         }
+        if (distance < 3) {
+          this.error = "Almost correct!";
+          return;
+        }
+        if (distance < 5) {
+          this.error = "You're getting close!"
+          return;
+        }
+
+        this.error = "Incorrect!";
       }
     },
     giveUp() {
       this.answerRevealed = true;
+      this.error = "";
       this.setDisplayData(false)
     }
   },
